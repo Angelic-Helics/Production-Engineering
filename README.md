@@ -3,8 +3,8 @@
 ## Team
 - **Team Name:** KitchenFlow Team
 - **Members:**
-  - Ristea Alexandru - Customer & Order Management
-  - Stoinoiu Alexandru - Menu, Inventory & Supplier Management
+  - Stoinoiu Alexandru - Customer & Order Management
+  - Ristea Alexandru  - Menu, Inventory & Supplier Management
 
 ## Project Description
 
@@ -102,5 +102,6 @@ All team members follow trunk-based development:
 ## Stoinoiu Alexandru - Lab 2
 - Today I set up Lab 2 to run locally from VS Code instead of Codespaces. I imported the official Spring Boot starter into our repository, installed Java 21, started MongoDB with Docker, and got the backend building and running on my machine. I also verified that the sample API works locally, including the /api/users endpoint and the MongoDB connection. On top of that, I added Windows-friendly PowerShell scripts and local setup documentation so the project is easier to run outside Codespaces.
 
-## Risea Alexandru - Lab 2
-- For this Lab 2 part, we replaced the sample starter users/todos backend with our real Customer & Order Management feature for KitchenFlow. We implemented the full backend flow for this feature slice: models, repositories, services, controllers, requests, responses, validation, and error handling. We also updated the test coverage and the requests.http file so the new endpoints can be verified locally.
+- I replaced the sample starter users/todos backend with our real Customer & Order Management feature for KitchenFlow. I implemented the full backend flow for this feature slice: models, repositories, services, controllers, requests, responses, validation, and error handling. I also updated the test coverage and the requests.http file so the new endpoints can be verified locally.
+
+## Ristea Alexandru - Lab 2
