@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    prod-eng-service: prod-eng
+  name: prod-eng
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      prod-eng-service: prod-eng
+  template:
+    metadata:
+      labels:
+        prod-eng-service: prod-eng
+    spec:
+      containers:
+        - env:
+            - name: ENVIRONMENT_NAME
+              value: local
+            - name: MONGODB_CONECTION_URL
+              value: mongodb://root:example@mongo:27017/
+          image: robertpoziumschi/hello-img-pipeline:v1.2.0
+          name: prod-eng
+          ports:
+            - containerPort: 8080
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    prod-eng-service: prod-eng
+  name: prod-eng
+spec:
+  type: LoadBalancer
+  ports:
+    - name: "8080"
+      port: 8080
+      targetPort: 8080
+  selector:
+    prod-eng-service: prod-eng

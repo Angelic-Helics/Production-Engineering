@@ -1,0 +1,42 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+ingester:
+  wal:
+    enabled: true
+    dir: /etc/loki/durable/wal
+  lifecycler:
+    address: 127.0.0.1
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+    final_sleep: 0s
+  chunk_idle_period: 5m
+  chunk_retain_period: 30s
+  
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /etc/loki/durable/index
+    cache_location: /etc/loki/durable/cache
+    cache_ttl: 24h
+  filesystem:
+    directory: /etc/loki/durable/index/chunks
+
+compactor:
+  working_directory: /etc/loki/durable/compactor
+
+limits_config:
+  allow_structured_metadata: false
