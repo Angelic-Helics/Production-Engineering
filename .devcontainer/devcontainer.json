@@ -1,0 +1,37 @@
+{
+  "name": "production-eng-service",
+  "image": "mcr.microsoft.com/devcontainers/java:dev-21-jdk-trixie",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "none",
+      "installGradle": "true",
+      "gradleVersion": "8.12"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false // Install Docker CE instead of OSS Moby build; not part of Trixie distribution
+    }
+  },
+  "containerEnv": {
+    "JAVA_HOME": "/usr/lib/jvm/msopenjdk-current"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.makefile-tools",
+        "ritwickdey.LiveServer",
+        "humao.rest-client",
+        "vscjava.vscode-gradle"
+      ],
+      "settings": {
+        "java.import.gradle.java.home": "/usr/lib/jvm/msopenjdk-current",
+        "java.jdt.ls.java.home": "/usr/lib/jvm/msopenjdk-current",
+        "redhat.telemetry.enabled": false,
+        "telemetry.telemetryLevel": "off",
+        "makefile.configureOnOpen": false
+      }
+    }
+  },
+  "forwardPorts": [8080]
+}
