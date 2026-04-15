@@ -5,11 +5,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
-import ro.unibuc.prodeng.repository.UserRepository;
-import ro.unibuc.prodeng.request.CreateTodoRequest;
-import ro.unibuc.prodeng.request.CreateUserRequest;
-import ro.unibuc.prodeng.service.TodoService;
-import ro.unibuc.prodeng.service.UserService;
+import ro.unibuc.prodeng.repository.CustomerRepository;
+import ro.unibuc.prodeng.request.CreateCustomerRequest;
+import ro.unibuc.prodeng.request.CreateOrderRequest;
+import ro.unibuc.prodeng.service.CustomerService;
+import ro.unibuc.prodeng.service.OrderService;
 
 import jakarta.annotation.PostConstruct;
 
@@ -18,13 +18,13 @@ import jakarta.annotation.PostConstruct;
 public class ProdEngApplication {
 
 	@Autowired
-	private UserService userService;
+	private CustomerService customerService;
 
 	@Autowired
-	private TodoService todoService;
+	private OrderService orderService;
 
 	@Autowired
-	private UserRepository userRepository;
+	private CustomerRepository customerRepository;
 
 	public static void main(String[] args) {
 		SpringApplication.run(ProdEngApplication.class, args);
@@ -32,10 +32,19 @@ public class ProdEngApplication {
 
 	@PostConstruct
 	public void runAfterObjectCreated() {
-		if (userRepository.findByEmail("frodo@theshire.me").isEmpty()) {
-			CreateUserRequest userRequest = new CreateUserRequest("Frodo Baggins", "frodo@theshire.me");
-			userService.createUser(userRequest);
-			todoService.createTodo(new CreateTodoRequest("Take the ring to Mordor", "frodo@theshire.me"));
+		if (customerRepository.findByEmail("frodo@theshire.me").isEmpty()) {
+			CreateCustomerRequest customerRequest = new CreateCustomerRequest(
+					"Frodo Baggins",
+					"frodo@theshire.me",
+					"+40700000001"
+			);
+			customerService.createCustomer(customerRequest);
+			orderService.createOrder(new CreateOrderRequest(
+					"Second Breakfast Platter",
+					1,
+					"frodo@theshire.me",
+					"Serve warm"
+			));
 		}
 	}
 }

@@ -60,7 +60,7 @@ Stop MongoDB services:
 ```
 
 ### Local URLs
-- API: `http://localhost:8080/api/users`
+- API: `http://localhost:8080/api/customers`
 - Mongo Express: `http://localhost:8090`
 - Mongo Express credentials: username `unibuc`, password `adobe`
 
@@ -70,11 +70,10 @@ Completed:
 - Spring Boot starter project integrated into this repository
 - Local Java 21 and Docker-based development flow verified
 - MongoDB connection working locally
-- Sample endpoints available and testable through `requests.http`
+- Customer and Order endpoints available and testable through `requests.http`
 
 Next:
-- Replace starter `users` and `todos` domain with KitchenFlow features
-- Implement at least one feature slice per team member
+- Implement the remaining KitchenFlow feature slice for menu, inventory, and suppliers
 - Add project-specific endpoints to `requests.http`
 - Open pull requests to merge feature work into `main`
 
@@ -98,3 +97,10 @@ All team members follow trunk-based development:
   - `docs: update readme for local lab 2 setup`
   - `chore: add powershell scripts for local development`
   - `feat: add customer controller`
+
+### Tracking
+## Stoinoiu Alexandru - Lab 2
+- Today I set up Lab 2 to run locally from VS Code instead of Codespaces. I imported the official Spring Boot starter into our repository, installed Java 21, started MongoDB with Docker, and got the backend building and running on my machine. I also verified that the sample API works locally, including the /api/users endpoint and the MongoDB connection. On top of that, I added Windows-friendly PowerShell scripts and local setup documentation so the project is easier to run outside Codespaces.
+
+## Risea Alexandru - Lab 2
+- For this Lab 2 part, we replaced the sample starter users/todos backend with our real Customer & Order Management feature for KitchenFlow. We implemented the full backend flow for this feature slice: models, repositories, services, controllers, requests, responses, validation, and error handling. We also updated the test coverage and the requests.http file so the new endpoints can be verified locally.
