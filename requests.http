@@ -78,8 +78,144 @@ Content-Type: application/json
 
 
 # ==========================================
+# Supplier Controller Endpoints
+# ==========================================
+
+### Get all suppliers
+GET http://localhost:8080/api/suppliers
+
+### Create a supplier
+# @name createSupplier
+POST http://localhost:8080/api/suppliers
+Content-Type: application/json
+
+{
+    "name": "Bianca Popescu",
+    "companyName": "Fresh Farm Supply",
+    "email": "bianca@freshfarm.ro",
+    "phoneNumber": "+40700111222"
+}
+
+### Get supplier by ID
+GET http://localhost:8080/api/suppliers/{{createSupplier.response.body.id}}
+
+### Update supplier
+PUT http://localhost:8080/api/suppliers/{{createSupplier.response.body.id}}
+Content-Type: application/json
+
+{
+    "name": "Bianca Popescu",
+    "companyName": "Fresh Farm Supply SRL",
+    "email": "bianca@freshfarm.ro",
+    "phoneNumber": "+40700999888"
+}
+
+
+# ==========================================
+# Inventory Controller Endpoints
+# ==========================================
+
+### Get all inventory items
+GET http://localhost:8080/api/inventory-items
+
+### Create inventory item
+# @name createInventoryItem
+POST http://localhost:8080/api/inventory-items
+Content-Type: application/json
+
+{
+    "name": "Mozzarella",
+    "unit": "kg",
+    "quantityInStock": 4.5,
+    "reorderThreshold": 2.0,
+    "supplierId": "{{createSupplier.response.body.id}}"
+}
+
+### Get low stock inventory items
+GET http://localhost:8080/api/inventory-items?lowStock=true
+
+### Get inventory items by supplier
+GET http://localhost:8080/api/inventory-items?supplierId={{createSupplier.response.body.id}}
+
+### Get inventory item by ID
+GET http://localhost:8080/api/inventory-items/{{createInventoryItem.response.body.id}}
+
+### Update inventory item
+PUT http://localhost:8080/api/inventory-items/{{createInventoryItem.response.body.id}}
+Content-Type: application/json
+
+{
+    "name": "Mozzarella",
+    "unit": "kg",
+    "reorderThreshold": 1.5,
+    "supplierId": "{{createSupplier.response.body.id}}"
+}
+
+### Restock inventory item
+PATCH http://localhost:8080/api/inventory-items/{{createInventoryItem.response.body.id}}/restock
+Content-Type: application/json
+
+{
+    "quantity": 3.0
+}
+
+
+# ==========================================
+# Menu Controller Endpoints
+# ==========================================
+
+### Get all menu items
+GET http://localhost:8080/api/menu-items
+
+### Create menu item
+# @name createMenuItem
+POST http://localhost:8080/api/menu-items
+Content-Type: application/json
+
+{
+    "name": "Margherita Pizza",
+    "description": "Classic pizza with mozzarella and tomato sauce",
+    "price": 39.99,
+    "recipe": [
+        {
+            "inventoryItemId": "{{createInventoryItem.response.body.id}}",
+            "quantityRequired": 0.3
+        }
+    ]
+}
+
+### Get menu item by ID
+GET http://localhost:8080/api/menu-items/{{createMenuItem.response.body.id}}
+
+### Update menu item
+PUT http://localhost:8080/api/menu-items/{{createMenuItem.response.body.id}}
+Content-Type: application/json
+
+{
+    "name": "Margherita Pizza",
+    "description": "Classic pizza with extra fresh mozzarella",
+    "price": 42.50,
+    "recipe": [
+        {
+            "inventoryItemId": "{{createInventoryItem.response.body.id}}",
+            "quantityRequired": 0.35
+        }
+    ]
+}
+
+
+# ==========================================
 # Cleanup
 # ==========================================
+
+### Delete menu item
+DELETE http://localhost:8080/api/menu-items/{{createMenuItem.response.body.id}}
+
+### Delete inventory item
+DELETE http://localhost:8080/api/inventory-items/{{createInventoryItem.response.body.id}}
+
+### Delete supplier
+DELETE http://localhost:8080/api/suppliers/{{createSupplier.response.body.id}}
 
 ### Delete order
 DELETE http://localhost:8080/api/orders/{{createOrder.response.body.id}}

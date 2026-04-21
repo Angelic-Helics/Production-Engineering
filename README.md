@@ -71,10 +71,10 @@ Completed:
 - Local Java 21 and Docker-based development flow verified
 - MongoDB connection working locally
 - Customer and Order endpoints available and testable through `requests.http`
+- Menu, inventory, and supplier management endpoints added with REST request examples
 
 Next:
-- Implement the remaining KitchenFlow feature slice for menu, inventory, and suppliers
-- Add project-specific endpoints to `requests.http`
+- Validate the full backend on a local Java 21 installation
 - Open pull requests to merge feature work into `main`
 
 ## Contributing
@@ -105,3 +105,6 @@ All team members follow trunk-based development:
 - I replaced the sample starter users/todos backend with our real Customer & Order Management feature for KitchenFlow. I implemented the full backend flow for this feature slice: models, repositories, services, controllers, requests, responses, validation, and error handling. I also updated the test coverage and the requests.http file so the new endpoints can be verified locally.
 
 ## Ristea Alexandru - Lab 2
+- I implemented the Menu, Inventory, and Supplier Management backend slice for KitchenFlow using the same Spring Boot and MongoDB architecture as the existing customer and order flows. This includes Mongo entities, repositories, services, controllers, request and response DTOs, validation, low-stock checks, menu recipe definitions, supplier assignment, and restock operations.
+
+- I also updated `requests.http` with runnable examples for the new endpoints and added unit tests for the new controllers and services so the feature can be exercised consistently once the project is run with the required Java 21 setup.
