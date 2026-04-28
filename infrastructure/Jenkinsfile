@@ -1,13 +1,70 @@
 pipeline {
     agent any
+
+    tools {
+        jdk 'jdk21'
+        gradle 'gradle-8'
+    }
+
     environment {
-        DOCKER_PASSWORD = credentials("docker_password")
+        DOCKER_IMAGE_NAME = 'alexdatasap/prod-eng-img'
+        IMAGE_VERSION = ''
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Build & Test') {
             steps {
-                sh './gradlew clean build'
+                sh 'gradle clean build'
+            }
+        }
+
+        stage('Determine Image Version') {
+            steps {
+                script {
+                    sh 'git fetch --tags --force'
+                    def latestTag = sh(
+                        script: "git tag --sort=-v:refname | head -n 1",
+                        returnStdout: true
+                    ).trim()
+
+                    if (!latestTag) {
+                        latestTag = '1.0.0'
+                    }
+
+                    def parts = latestTag.tokenize('.')
+                    def major = parts.size() > 0 ? parts[0] : '1'
+                    def minor = parts.size() > 1 ? parts[1] : '0'
+                    def patch = parts.size() > 2 ? parts[2] : '0'
+                    def nextMinor = minor.isInteger() ? (minor.toInteger() + 1).toString() : '1'
+                    env.IMAGE_VERSION = "${major}.${nextMinor}.${patch}"
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${DOCKER_IMAGE_NAME}:${IMAGE_VERSION} ."
+            }
+        }
+
+        stage('Login and Push Image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker_password',
+                    usernameVariable: 'DOCKER_USERNAME',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | docker login docker.io -u "$DOCKER_USERNAME" --password-stdin
+                        docker push "$DOCKER_IMAGE_NAME:$IMAGE_VERSION"
+                    '''
+                }
             }
         }
     }
