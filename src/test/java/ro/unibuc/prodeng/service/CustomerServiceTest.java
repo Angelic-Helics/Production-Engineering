@@ -69,6 +69,26 @@ class CustomerServiceTest {
     }
 
     @Test
+    void testGetCustomerByEmail_existingCustomer_returnsCustomer() {
+        CustomerEntity customer = new CustomerEntity("1", "Alice", "alice@example.com", "+40111111111");
+        when(customerRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(customer));
+
+        CustomerResponse result = customerService.getCustomerByEmail("alice@example.com");
+
+        assertNotNull(result);
+        assertEquals("Alice", result.name());
+        assertEquals("alice@example.com", result.email());
+    }
+
+    @Test
+    void testGetCustomerByEmail_missingCustomer_throwsEntityNotFoundException() {
+        when(customerRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class,
+                () -> customerService.getCustomerByEmail("ghost@example.com"));
+    }
+
+    @Test
     void testCreateCustomer_validCustomer_createsAndReturnsCustomer() {
         CreateCustomerRequest request =
                 new CreateCustomerRequest("Alice", "alice@example.com", "+40111111111");
@@ -84,6 +104,16 @@ class CustomerServiceTest {
         assertEquals("Alice", result.name());
         assertEquals("+40111111111", result.phoneNumber());
         verify(customerRepository, times(1)).save(any(CustomerEntity.class));
+    }
+
+    @Test
+    void testCreateCustomer_duplicateEmail_throwsIllegalArgumentException() {
+        CreateCustomerRequest request =
+                new CreateCustomerRequest("Alice", "alice@example.com", "+40111111111");
+        when(customerRepository.findByEmail("alice@example.com"))
+                .thenReturn(Optional.of(new CustomerEntity("1", "Existing", "alice@example.com", "+40000000000")));
+
+        assertThrows(IllegalArgumentException.class, () -> customerService.createCustomer(request));
     }
 
     @Test
@@ -108,5 +138,14 @@ class CustomerServiceTest {
         when(customerRepository.existsById("999")).thenReturn(false);
 
         assertThrows(EntityNotFoundException.class, () -> customerService.deleteCustomer("999"));
+    }
+
+    @Test
+    void testDeleteCustomer_existingCustomer_deletesCustomer() {
+        when(customerRepository.existsById("1")).thenReturn(true);
+
+        customerService.deleteCustomer("1");
+
+        verify(customerRepository, times(1)).deleteById("1");
     }
 }
