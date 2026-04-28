@@ -8,8 +8,6 @@ pipeline {
 
     environment {
         DOCKER_IMAGE_NAME = 'alexdatasap/prod-eng-img'
-        IMAGE_VERSION = ''
-        DOCKER_IMAGE_TAG = ''
     }
 
     stages {
@@ -27,32 +25,34 @@ pipeline {
 
         stage('Determine Image Version') {
             steps {
-                script {
-                    sh 'git fetch --tags --force'
-                    def latestTag = sh(
-                        script: "git tag --sort=-v:refname | head -n 1",
-                        returnStdout: true
-                    ).trim()
+                sh '''
+                    git fetch --tags --force
+                    LATEST_TAG="$(git tag --sort=-v:refname | head -n 1)"
 
-                    if (!latestTag) {
-                        latestTag = '1.0.0'
-                    }
+                    if [ -z "$LATEST_TAG" ]; then
+                        LATEST_TAG="1.0.0"
+                    fi
 
-                    def parts = latestTag.tokenize('.')
-                    def major = parts.size() > 0 ? parts[0] : '1'
-                    def minor = parts.size() > 1 ? parts[1] : '0'
-                    def patch = parts.size() > 2 ? parts[2] : '0'
-                    def nextMinor = minor.isInteger() ? (minor.toInteger() + 1).toString() : '1'
-                    env.IMAGE_VERSION = "${major}.${nextMinor}.${patch}"
-                    env.DOCKER_IMAGE_TAG = "${env.DOCKER_IMAGE_NAME}:${env.IMAGE_VERSION}"
-                    echo "Docker image tag: ${env.DOCKER_IMAGE_TAG}"
-                }
+                    MAJOR="$(echo "$LATEST_TAG" | cut -d. -f1)"
+                    MINOR="$(echo "$LATEST_TAG" | cut -d. -f2)"
+                    PATCH="$(echo "$LATEST_TAG" | cut -d. -f3)"
+
+                    case "$MAJOR" in ''|*[!0-9]*) MAJOR=1 ;; esac
+                    case "$MINOR" in ''|*[!0-9]*) MINOR=0 ;; esac
+                    case "$PATCH" in ''|*[!0-9]*) PATCH=0 ;; esac
+
+                    NEXT_MINOR=$((MINOR + 1))
+                    IMAGE_TAG="$DOCKER_IMAGE_NAME:$MAJOR.$NEXT_MINOR.$PATCH"
+
+                    echo "$IMAGE_TAG" > .docker-image-tag
+                    echo "Docker image tag: $IMAGE_TAG"
+                '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t "$DOCKER_IMAGE_TAG" .'
+                sh 'docker build -t "$(cat .docker-image-tag)" .'
             }
         }
 
@@ -65,7 +65,7 @@ pipeline {
                 )]) {
                     sh '''
                         echo "$DOCKER_PASSWORD" | docker login docker.io -u "$DOCKER_USERNAME" --password-stdin
-                        docker push "$DOCKER_IMAGE_TAG"
+                        docker push "$(cat .docker-image-tag)"
                     '''
                 }
             }
