@@ -134,6 +134,16 @@ class CustomerServiceTest {
     }
 
     @Test
+    void testUpdateCustomer_missingCustomer_throwsEntityNotFoundException() {
+        when(customerRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> customerService.updateCustomer(
+                "missing",
+                new UpdateCustomerRequest("Alice Updated", "+40333333333")
+        ));
+    }
+
+    @Test
     void testDeleteCustomer_missingCustomer_throwsEntityNotFoundException() {
         when(customerRepository.existsById("999")).thenReturn(false);
 

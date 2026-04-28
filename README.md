@@ -159,3 +159,40 @@ Run integration tests tagged with `IntegrationTest`.
 .\run_local.ps1
 ```
 Start the application locally before running the JMeter performance plan.
+
+## Ristea Alexandru - Lab 4-5
+
+- `MenuServiceTest`
+  - This file tests the menu management business logic in isolation.
+  - I mocked the menu and inventory repositories so recipe validation and availability checks can be tested without MongoDB.
+  - I covered success cases like listing menu items, creating menu items, updating recipes, and deleting existing menu items.
+  - I also covered failure cases like missing menu items, missing inventory items from a recipe, and unavailable menu items caused by low stock.
+
+- `InventoryServiceTest`
+  - This file tests the inventory business logic, including the branch-heavy stock and supplier rules.
+  - I mocked the inventory and menu repositories plus the supplier service.
+  - I tested filtering inventory by low-stock and supplier, creating items, updating items, restocking quantities, and deleting unused items.
+  - I also checked edge cases like missing inventory items and the rule that prevents deleting inventory still referenced by menu recipes.
+
+- `SupplierServiceTest`
+  - This file tests the supplier management logic in isolation.
+  - I mocked the supplier and inventory repositories so supplier rules can be verified without the database.
+  - I covered success cases like listing suppliers, creating suppliers, updating supplier data, and deleting suppliers with no assigned inventory.
+  - I also covered failure cases like missing suppliers, duplicate supplier email, and blocking deletion when inventory items are still assigned to that supplier.
+
+- `MenuControllerTest`, `InventoryControllerTest`, and `SupplierControllerTest`
+  - These files test the HTTP endpoints using MockMvc.
+  - They verify the controller status codes and JSON payloads for the menu, inventory, and supplier flows.
+  - I also checked error handling like 404 for missing entities, 400 for invalid operations, and the normal 201/200/204 responses for successful requests.
+  - This makes sure the controller layer is wired correctly to the service layer for my feature slice.
+
+- Commands:
+```powershell
+.\gradlew test
+```
+Run unit tests.
+
+```powershell
+.\gradlew jacocoTestReport
+```
+Run unit tests with JaCoCo and generate the coverage report.
