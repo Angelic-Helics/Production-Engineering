@@ -159,3 +159,19 @@ Run integration tests tagged with `IntegrationTest`.
 .\run_local.ps1
 ```
 Start the application locally before running the JMeter performance plan.
+
+## Stoinoiu Alexandru and Ristea Alexandru - Lab 6
+
+- We configured Jenkins as the CI server for the project using the provided Docker-based setup.
+- We configured Jenkins tools for JDK 21 and Gradle, then connected Jenkins to the GitHub organization.
+- We added GitHub credentials for repository scanning and Docker Hub credentials for publishing images.
+- We configured the organization folder to discover branches that contain `infrastructure/Jenkinsfile`.
+- We updated the Jenkins pipeline to run `gradle clean build`, build a Docker image, log in to Docker Hub, and push the image `alexdatasap/prod-eng-img`.
+- We verified that the `jenkins` branch was discovered and that the Jenkins pipeline finished successfully.
+
+- Lab 6 evidence:
+```text
+Jenkins successful build
+Organization scan log showing the jenkins branch
+Docker Hub repository with the pushed image tag
+```
