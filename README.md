@@ -186,6 +186,35 @@ Start the application locally before running the JMeter performance plan.
   - I also checked error handling like 404 for missing entities, 400 for invalid operations, and the normal 201/200/204 responses for successful requests.
   - This makes sure the controller layer is wired correctly to the service layer for my feature slice.
 
+- `MenuControllerIntegrationTest`
+  - This file is my Lab 5 integration test for menu management.
+  - It runs against the real Spring Boot stack with Testcontainers and MongoDB.
+  - I verified the full menu flow: create, read, update, availability recalculation based on inventory stock, and delete.
+  - I also covered the failure case where a menu item references an inventory ingredient that does not exist.
+
+- `InventoryControllerIntegrationTest`
+  - This file is my Lab 5 integration test for inventory management.
+  - It verifies the full inventory flow with real supplier and menu dependencies in place.
+  - I tested creating items, low-stock filtering, restocking, updating supplier assignments, and deleting inventory that is no longer referenced.
+  - I also covered the rule that blocks deleting inventory items still used by a menu recipe.
+
+- `SupplierControllerIntegrationTest`
+  - This file is my Lab 5 integration test for supplier management.
+  - It verifies the real create, read, update, and delete lifecycle for suppliers.
+  - I also covered the guard that prevents deleting suppliers that still have assigned inventory items.
+
+- `jmeter/menu_api_test_plan_local.jmx`
+  - This is my Lab 5 performance test plan for menu management.
+  - It creates the supplier and inventory dependencies required by a menu item, then exercises the create and read menu endpoints under load.
+
+- `jmeter/inventory_api_test_plan_local.jmx`
+  - This is my Lab 5 performance test plan for inventory management.
+  - It creates a supplier dependency, creates inventory items, restocks them, and reads filtered inventory results under load.
+
+- `jmeter/supplier_api_test_plan_local.jmx`
+  - This is my Lab 5 performance test plan for supplier management.
+  - It sends repeated create and list requests to the supplier API with unique data so the plan can be run locally without collisions.
+
 - Commands:
 ```powershell
 .\gradlew test
@@ -196,3 +225,13 @@ Run unit tests.
 .\gradlew jacocoTestReport
 ```
 Run unit tests with JaCoCo and generate the coverage report.
+
+```powershell
+.\gradlew testIT
+```
+Run integration tests tagged with `IntegrationTest`.
+
+```powershell
+.\run_local.ps1
+```
+Start the application locally before running the JMeter performance plans.
