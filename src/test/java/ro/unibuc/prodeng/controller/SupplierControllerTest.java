@@ -3,9 +3,11 @@ package ro.unibuc.prodeng.controller;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -13,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import ro.unibuc.prodeng.exception.EntityNotFoundException;
 import ro.unibuc.prodeng.exception.GlobalExceptionHandler;
 import ro.unibuc.prodeng.request.CreateSupplierRequest;
 import ro.unibuc.prodeng.request.UpdateSupplierRequest;
@@ -59,6 +63,17 @@ class SupplierControllerTest {
                 .andExpect(jsonPath("$.email", is("bianca@freshfarm.ro")));
 
         verify(supplierService, times(1)).getSupplierById("1");
+    }
+
+    @Test
+    void testGetAllSuppliers_returnsList() throws Exception {
+        SupplierResponse response =
+                new SupplierResponse("1", "Bianca Popescu", "Fresh Farm Supply", "bianca@freshfarm.ro", "+40700111222");
+        when(supplierService.getAllSuppliers()).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/api/suppliers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].companyName", is("Fresh Farm Supply")));
     }
 
     @Test
@@ -104,5 +119,32 @@ class SupplierControllerTest {
                 .andExpect(jsonPath("$.phoneNumber", is("+40700999888")));
 
         verify(supplierService, times(1)).updateSupplier(eq("1"), any(UpdateSupplierRequest.class));
+    }
+
+    @Test
+    void testGetSupplierById_missingSupplier_returnsNotFound() throws Exception {
+        when(supplierService.getSupplierById("missing")).thenThrow(new EntityNotFoundException("missing"));
+
+        mockMvc.perform(get("/api/suppliers/{id}", "missing"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void testDeleteSupplier_existingSupplier_returnsNoContent() throws Exception {
+        mockMvc.perform(delete("/api/suppliers/{id}", "1"))
+                .andExpect(status().isNoContent());
+
+        verify(supplierService, times(1)).deleteSupplier("1");
+    }
+
+    @Test
+    void testDeleteSupplier_withAssignedInventory_returnsBadRequest() throws Exception {
+        doThrow(new IllegalArgumentException("Supplier is still assigned to inventory items: 1"))
+                .when(supplierService).deleteSupplier("1");
+
+        mockMvc.perform(delete("/api/suppliers/{id}", "1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
     }
 }

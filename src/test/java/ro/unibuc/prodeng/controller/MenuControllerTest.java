@@ -3,9 +3,11 @@ package ro.unibuc.prodeng.controller;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -25,6 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import ro.unibuc.prodeng.exception.EntityNotFoundException;
 import ro.unibuc.prodeng.exception.GlobalExceptionHandler;
 import ro.unibuc.prodeng.request.CreateMenuItemRequest;
 import ro.unibuc.prodeng.request.IngredientRequirementRequest;
@@ -70,6 +73,23 @@ class MenuControllerTest {
                 .andExpect(jsonPath("$.available", is(true)));
 
         verify(menuService, times(1)).getMenuItemById("1");
+    }
+
+    @Test
+    void testGetAllMenuItems_returnsList() throws Exception {
+        MenuItemResponse response = new MenuItemResponse(
+                "1",
+                "Margherita Pizza",
+                "Classic pizza with mozzarella",
+                new BigDecimal("39.99"),
+                true,
+                List.of(new IngredientRequirementResponse("inv-1", "Mozzarella", new BigDecimal("0.30")))
+        );
+        when(menuService.getAllMenuItems()).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/api/menu-items"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name", is("Margherita Pizza")));
     }
 
     @Test
@@ -126,5 +146,31 @@ class MenuControllerTest {
                 .andExpect(jsonPath("$.price", is(42.50)));
 
         verify(menuService, times(1)).updateMenuItem(eq("1"), any(UpdateMenuItemRequest.class));
+    }
+
+    @Test
+    void testGetMenuItemById_missingMenuItem_returnsNotFound() throws Exception {
+        when(menuService.getMenuItemById("missing")).thenThrow(new EntityNotFoundException("missing"));
+
+        mockMvc.perform(get("/api/menu-items/{id}", "missing"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void testDeleteMenuItem_existingMenuItem_returnsNoContent() throws Exception {
+        mockMvc.perform(delete("/api/menu-items/{id}", "1"))
+                .andExpect(status().isNoContent());
+
+        verify(menuService, times(1)).deleteMenuItem("1");
+    }
+
+    @Test
+    void testDeleteMenuItem_missingMenuItem_returnsNotFound() throws Exception {
+        doThrow(new EntityNotFoundException("missing")).when(menuService).deleteMenuItem("missing");
+
+        mockMvc.perform(delete("/api/menu-items/{id}", "missing"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").exists());
     }
 }

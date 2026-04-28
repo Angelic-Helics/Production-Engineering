@@ -65,6 +65,22 @@ class InventoryServiceTest {
     }
 
     @Test
+    void testGetInventoryItems_supplierFilter_returnsSupplierItems() {
+        SupplierEntity supplier = new SupplierEntity("sup-1", "Bianca", "Fresh Farm Supply",
+                "bianca@freshfarm.ro", "+40700111222");
+        InventoryItemEntity item = new InventoryItemEntity("1", "Mozzarella", "kg",
+                new BigDecimal("4.50"), new BigDecimal("2.00"), "sup-1");
+
+        when(inventoryItemRepository.findBySupplierId("sup-1")).thenReturn(List.of(item));
+        when(supplierService.getSupplierEntityById("sup-1")).thenReturn(supplier);
+
+        List<InventoryItemResponse> result = inventoryService.getInventoryItems(null, "sup-1");
+
+        assertEquals(1, result.size());
+        assertEquals("Fresh Farm Supply", result.get(0).supplierName());
+    }
+
+    @Test
     void testCreateInventoryItem_validRequest_createsMappedItem() {
         SupplierEntity supplier = new SupplierEntity("sup-1", "Bianca", "Fresh Farm Supply",
                 "bianca@freshfarm.ro", "+40700111222");
@@ -91,6 +107,32 @@ class InventoryServiceTest {
     }
 
     @Test
+    void testUpdateInventoryItem_existingItem_updatesFieldsAndKeepsQuantity() {
+        InventoryItemEntity existing = new InventoryItemEntity("1", "Mozzarella", "kg",
+                new BigDecimal("4.50"), new BigDecimal("2.00"), "sup-1");
+        SupplierEntity supplier = new SupplierEntity("sup-2", "Alex", "Market Greens",
+                "alex@greens.ro", "+40700333444");
+        when(inventoryItemRepository.findById("1")).thenReturn(Optional.of(existing));
+        when(supplierService.getSupplierEntityById("sup-2")).thenReturn(supplier);
+        when(inventoryItemRepository.save(any(InventoryItemEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        InventoryItemResponse result = inventoryService.updateInventoryItem(
+                "1",
+                new ro.unibuc.prodeng.request.UpdateInventoryItemRequest(
+                        "Aged Mozzarella",
+                        " KG ",
+                        new BigDecimal("1.50"),
+                        "sup-2"
+                )
+        );
+
+        assertEquals("Aged Mozzarella", result.name());
+        assertEquals("kg", result.unit());
+        assertEquals(new BigDecimal("4.50"), result.quantityInStock());
+        assertEquals("sup-2", result.supplierId());
+    }
+
+    @Test
     void testRestockInventoryItem_existingItem_addsQuantity() {
         InventoryItemEntity existing = new InventoryItemEntity("1", "Mozzarella", "kg",
                 new BigDecimal("4.50"), new BigDecimal("2.00"), "sup-1");
@@ -107,6 +149,16 @@ class InventoryServiceTest {
         );
 
         assertEquals(new BigDecimal("7.50"), result.quantityInStock());
+    }
+
+    @Test
+    void testRestockInventoryItem_missingItem_throwsEntityNotFoundException() {
+        when(inventoryItemRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> inventoryService.restockInventoryItem(
+                "missing",
+                new RestockInventoryItemRequest(new BigDecimal("3.00"))
+        ));
     }
 
     @Test
@@ -129,5 +181,15 @@ class InventoryServiceTest {
         when(inventoryItemRepository.findById("missing")).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> inventoryService.getInventoryItemById("missing"));
+    }
+
+    @Test
+    void testDeleteInventoryItem_existingUnusedItem_deletesItem() {
+        when(inventoryItemRepository.existsById("1")).thenReturn(true);
+        when(menuItemRepository.findAll()).thenReturn(List.of());
+
+        inventoryService.deleteInventoryItem("1");
+
+        verify(inventoryItemRepository).deleteById("1");
     }
 }

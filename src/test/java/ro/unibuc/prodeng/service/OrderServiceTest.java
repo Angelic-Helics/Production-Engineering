@@ -183,6 +183,14 @@ class OrderServiceTest {
     }
 
     @Test
+    void testUpdateStatus_missingOrder_throwsEntityNotFoundException() {
+        when(orderRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class,
+                () -> orderService.updateStatus("missing", new UpdateOrderStatusRequest(OrderStatus.PREPARING)));
+    }
+
+    @Test
     void testCreateOrder_missingCustomer_throwsEntityNotFoundException() {
         when(customerService.getCustomerEntityByEmail("ghost@example.com"))
                 .thenThrow(new EntityNotFoundException("ghost@example.com"));

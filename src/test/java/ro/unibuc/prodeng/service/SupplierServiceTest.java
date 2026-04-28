@@ -53,6 +53,29 @@ class SupplierServiceTest {
     }
 
     @Test
+    void testGetSupplierById_missingSupplier_throwsEntityNotFoundException() {
+        when(supplierRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> supplierService.getSupplierById("missing"));
+    }
+
+    @Test
+    void testCreateSupplier_validRequest_createsSupplier() {
+        CreateSupplierRequest request =
+                new CreateSupplierRequest("Bianca", "Fresh Farm Supply", "bianca@freshfarm.ro", "+40700111222");
+        when(supplierRepository.findByEmail("bianca@freshfarm.ro")).thenReturn(Optional.empty());
+        when(supplierRepository.save(any(SupplierEntity.class))).thenAnswer(invocation -> {
+            SupplierEntity entity = invocation.getArgument(0);
+            return new SupplierEntity("generated-id", entity.name(), entity.companyName(), entity.email(), entity.phoneNumber());
+        });
+
+        SupplierResponse result = supplierService.createSupplier(request);
+
+        assertEquals("generated-id", result.id());
+        assertEquals("Fresh Farm Supply", result.companyName());
+    }
+
+    @Test
     void testCreateSupplier_duplicateEmail_throwsIllegalArgumentException() {
         CreateSupplierRequest request =
                 new CreateSupplierRequest("Bianca", "Fresh Farm Supply", "bianca@freshfarm.ro", "+40700111222");
@@ -86,6 +109,21 @@ class SupplierServiceTest {
     }
 
     @Test
+    void testUpdateSupplier_duplicateEmailFromAnotherSupplier_throwsIllegalArgumentException() {
+        SupplierEntity existing =
+                new SupplierEntity("1", "Bianca", "Fresh Farm Supply", "bianca@freshfarm.ro", "+40700111222");
+        SupplierEntity otherSupplier =
+                new SupplierEntity("2", "Alex", "Market Greens", "alex@greens.ro", "+40700333444");
+        when(supplierRepository.findById("1")).thenReturn(Optional.of(existing));
+        when(supplierRepository.findByEmail("alex@greens.ro")).thenReturn(Optional.of(otherSupplier));
+
+        assertThrows(IllegalArgumentException.class, () -> supplierService.updateSupplier(
+                "1",
+                new UpdateSupplierRequest("Bianca", "Fresh Farm Supply", "alex@greens.ro", "+40700111222")
+        ));
+    }
+
+    @Test
     void testDeleteSupplier_missingSupplier_throwsEntityNotFoundException() {
         when(supplierRepository.existsById("missing")).thenReturn(false);
 
@@ -105,5 +143,15 @@ class SupplierServiceTest {
 
         assertTrue(exception.getMessage().contains("still assigned"));
         verify(supplierRepository, times(0)).deleteById("1");
+    }
+
+    @Test
+    void testDeleteSupplier_withoutAssignedInventory_deletesSupplier() {
+        when(supplierRepository.existsById("1")).thenReturn(true);
+        when(inventoryItemRepository.findBySupplierId("1")).thenReturn(List.of());
+
+        supplierService.deleteSupplier("1");
+
+        verify(supplierRepository, times(1)).deleteById("1");
     }
 }

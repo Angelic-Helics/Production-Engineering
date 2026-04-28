@@ -4,12 +4,15 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -26,9 +29,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import ro.unibuc.prodeng.exception.EntityNotFoundException;
 import ro.unibuc.prodeng.exception.GlobalExceptionHandler;
 import ro.unibuc.prodeng.request.CreateInventoryItemRequest;
 import ro.unibuc.prodeng.request.RestockInventoryItemRequest;
+import ro.unibuc.prodeng.request.UpdateInventoryItemRequest;
 import ro.unibuc.prodeng.response.InventoryItemResponse;
 import ro.unibuc.prodeng.service.InventoryService;
 
@@ -101,6 +106,54 @@ class InventoryControllerTest {
     }
 
     @Test
+    void testGetInventoryItemById_existingItem_returnsItem() throws Exception {
+        InventoryItemResponse response = new InventoryItemResponse(
+                "1",
+                "Mozzarella",
+                "kg",
+                new BigDecimal("4.50"),
+                new BigDecimal("2.00"),
+                false,
+                "sup-1",
+                "Fresh Farm Supply"
+        );
+        when(inventoryService.getInventoryItemById("1")).thenReturn(response);
+
+        mockMvc.perform(get("/api/inventory-items/{id}", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("Mozzarella")))
+                .andExpect(jsonPath("$.supplierName", is("Fresh Farm Supply")));
+    }
+
+    @Test
+    void testUpdateInventoryItem_existingItem_updatesItem() throws Exception {
+        UpdateInventoryItemRequest request = new UpdateInventoryItemRequest(
+                "Aged Mozzarella",
+                "kg",
+                new BigDecimal("1.50"),
+                "sup-1"
+        );
+        InventoryItemResponse response = new InventoryItemResponse(
+                "1",
+                "Aged Mozzarella",
+                "kg",
+                new BigDecimal("4.50"),
+                new BigDecimal("1.50"),
+                false,
+                "sup-1",
+                "Fresh Farm Supply"
+        );
+        when(inventoryService.updateInventoryItem(eq("1"), any(UpdateInventoryItemRequest.class))).thenReturn(response);
+
+        mockMvc.perform(put("/api/inventory-items/{id}", "1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("Aged Mozzarella")))
+                .andExpect(jsonPath("$.reorderThreshold", is(1.50)));
+    }
+
+    @Test
     void testRestockInventoryItem_existingItem_updatesQuantity() throws Exception {
         RestockInventoryItemRequest request = new RestockInventoryItemRequest(new BigDecimal("3.00"));
         InventoryItemResponse response = new InventoryItemResponse(
@@ -122,5 +175,32 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.quantityInStock", is(7.50)));
 
         verify(inventoryService, times(1)).restockInventoryItem(eq("1"), any(RestockInventoryItemRequest.class));
+    }
+
+    @Test
+    void testDeleteInventoryItem_existingItem_returnsNoContent() throws Exception {
+        mockMvc.perform(delete("/api/inventory-items/{id}", "1"))
+                .andExpect(status().isNoContent());
+
+        verify(inventoryService, times(1)).deleteInventoryItem("1");
+    }
+
+    @Test
+    void testGetInventoryItemById_missingItem_returnsNotFound() throws Exception {
+        when(inventoryService.getInventoryItemById("missing")).thenThrow(new EntityNotFoundException("missing"));
+
+        mockMvc.perform(get("/api/inventory-items/{id}", "missing"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void testDeleteInventoryItem_usedByMenu_returnsBadRequest() throws Exception {
+        doThrow(new IllegalArgumentException("Inventory item is used by at least one menu item: 1"))
+                .when(inventoryService).deleteInventoryItem("1");
+
+        mockMvc.perform(delete("/api/inventory-items/{id}", "1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
     }
 }
