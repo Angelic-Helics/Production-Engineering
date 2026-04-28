@@ -108,3 +108,54 @@ All team members follow trunk-based development:
 - I implemented the Menu, Inventory, and Supplier Management backend slice for KitchenFlow using the same Spring Boot and MongoDB architecture as the existing customer and order flows. This includes Mongo entities, repositories, services, controllers, request and response DTOs, validation, low-stock checks, menu recipe definitions, supplier assignment, and restock operations.
 
 - I also updated `requests.http` with runnable examples for the new endpoints and added unit tests for the new controllers and services so the feature can be exercised consistently once the project is run with the required Java 21 setup.
+
+## Stoinoiu Alexandru - Lab 4-5
+
+- `CustomerServiceTest`
+  - This file tests the customer business logic in isolation.
+  - I mocked the repository so the service can be tested without MongoDB.
+  - I covered success cases like getting, creating, updating, and deleting customers.
+  - I also covered failure cases like missing customers and duplicate email, which helps branch coverage.
+
+- `OrderServiceTest`
+  - This file tests the order service, which has the most branch logic on my side.
+  - I mocked both the order repository and customer service.
+  - I tested creating orders, reading orders, updating order status, and deleting orders.
+  - I also checked edge cases like blank or null special instructions, missing orders, missing customers, and invalid status changes.
+
+- `CustomerControllerTest` and `OrderControllerTest`
+  - These files test the HTTP endpoints using MockMvc.
+  - They check that the controllers return the correct status codes and JSON responses.
+  - I also verified error handling, like 404 for missing entities and 400 for validation or invalid status transitions.
+  - This makes sure the controller layer is wired correctly to the service layer.
+
+- `CustomerControllerIntegrationTest`
+  - This file is my Lab 5 integration test.
+  - It runs against the real Spring Boot stack with Testcontainers and MongoDB.
+  - I verified the full customer flow: create, read by id, read by email, update, and delete.
+
+- `jmeter/customer_api_test_plan_local.jmx`
+  - This is my Lab 5 performance test plan.
+  - It sends repeated create and get requests to the customer API.
+  - I ran it locally in JMeter and confirmed the summary report had 0% errors.
+
+- Commands:
+```powershell
+.\gradlew test
+```
+Run unit tests.
+
+```powershell
+.\gradlew jacocoTestReport
+```
+Run unit tests with JaCoCo and generate the coverage report.
+
+```powershell
+.\gradlew testIT
+```
+Run integration tests tagged with `IntegrationTest`.
+
+```powershell
+.\run_local.ps1
+```
+Start the application locally before running the JMeter performance plan.
