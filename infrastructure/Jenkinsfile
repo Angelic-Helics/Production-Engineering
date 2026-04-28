@@ -9,6 +9,7 @@ pipeline {
     environment {
         DOCKER_IMAGE_NAME = 'alexdatasap/prod-eng-img'
         IMAGE_VERSION = ''
+        DOCKER_IMAGE_TAG = ''
     }
 
     stages {
@@ -43,13 +44,15 @@ pipeline {
                     def patch = parts.size() > 2 ? parts[2] : '0'
                     def nextMinor = minor.isInteger() ? (minor.toInteger() + 1).toString() : '1'
                     env.IMAGE_VERSION = "${major}.${nextMinor}.${patch}"
+                    env.DOCKER_IMAGE_TAG = "${env.DOCKER_IMAGE_NAME}:${env.IMAGE_VERSION}"
+                    echo "Docker image tag: ${env.DOCKER_IMAGE_TAG}"
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${env.DOCKER_IMAGE_NAME}:${env.IMAGE_VERSION} ."
+                sh 'docker build -t "$DOCKER_IMAGE_TAG" .'
             }
         }
 
@@ -62,7 +65,7 @@ pipeline {
                 )]) {
                     sh '''
                         echo "$DOCKER_PASSWORD" | docker login docker.io -u "$DOCKER_USERNAME" --password-stdin
-                        docker push "$DOCKER_IMAGE_NAME:$IMAGE_VERSION"
+                        docker push "$DOCKER_IMAGE_TAG"
                     '''
                 }
             }
