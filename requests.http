@@ -212,10 +212,9 @@ Content-Type: application/json
 DELETE http://localhost:8080/api/menu-items/{{createMenuItem.response.body.id}}
 
 ### Delete inventory item
-DELETE http://localhost:8080/api/inventory-items/{{createInventoryItem.response.body.id}}
-
+DELETE http://localhost:8080/api/inventory-items/69e86f954b71007031e89eee
 ### Delete supplier
-DELETE http://localhost:8080/api/suppliers/{{createSupplier.response.body.id}}
+DELETE http://localhost:8080/api/suppliers/69e86f954b71007031e89eee
 
 ### Delete order
 DELETE http://localhost:8080/api/orders/{{createOrder.response.body.id}}

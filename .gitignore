@@ -2,6 +2,7 @@ HELP.md
 .gradle
 .gradle-home/
 .gradle-user/
+.gradle-lab5-home/
 build/
 target/
 !gradle/wrapper/gradle-wrapper.jar
