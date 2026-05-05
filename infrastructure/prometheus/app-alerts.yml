@@ -30,3 +30,33 @@ groups:
         annotations:
           summary: KitchenFlow HTTP request latency is critically high
           description: "At least one Spring Boot HTTP endpoint is taking more than 1 second to respond.\n  VALUE = {{ $value }} seconds\n  LABELS = {{ $labels }}"
+
+      - alert: WARNING-HighApiErrorRate
+        expr: |
+          (
+            sum(increase(http_server_requests_seconds_count{job="spring-prod-eng-app", uri!="/actuator/prometheus", status=~"4..|5.."}[1m]))
+            /
+            clamp_min(sum(increase(http_server_requests_seconds_count{job="spring-prod-eng-app", uri!="/actuator/prometheus"}[1m])), 1)
+          ) > 0.2
+        for: 30s
+        labels:
+          severity: warning
+          category: quality
+        annotations:
+          summary: KitchenFlow API error rate is high
+          description: "More than 20% of recent API requests are returning HTTP 4xx or 5xx responses.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: CRITICAL-HighApiErrorRate
+        expr: |
+          (
+            sum(increase(http_server_requests_seconds_count{job="spring-prod-eng-app", uri!="/actuator/prometheus", status=~"4..|5.."}[1m]))
+            /
+            clamp_min(sum(increase(http_server_requests_seconds_count{job="spring-prod-eng-app", uri!="/actuator/prometheus"}[1m])), 1)
+          ) > 0.5
+        for: 30s
+        labels:
+          severity: critical
+          category: quality
+        annotations:
+          summary: KitchenFlow API error rate is critically high
+          description: "More than 50% of recent API requests are returning HTTP 4xx or 5xx responses.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

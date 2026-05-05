@@ -203,6 +203,109 @@
       ],
       "title": "Performance - Max HTTP Request Duration",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 20
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "editorMode": "code",
+          "expr": "100 * (sum(increase(http_server_requests_seconds_count{job=\"spring-prod-eng-app\", uri!=\"/actuator/prometheus\", status=~\"4..|5..\"}[1m])) / clamp_min(sum(increase(http_server_requests_seconds_count{job=\"spring-prod-eng-app\", uri!=\"/actuator/prometheus\"}[1m])), 1))",
+          "legendFormat": "API error rate",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Quality - API Error Rate",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -211,7 +314,8 @@
     "kitchenflow",
     "lab9",
     "availability",
-    "performance"
+    "performance",
+    "quality"
   ],
   "templating": {
     "list": []
@@ -222,7 +326,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "KitchenFlow Availability and Performance",
+  "title": "KitchenFlow Availability, Performance and Quality",
   "uid": "kitchenflow-availability-performance",
   "version": 1,
   "weekStart": ""
