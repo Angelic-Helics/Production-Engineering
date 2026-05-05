@@ -9,7 +9,6 @@ pipeline {
     environment {
         DOCKER_IMAGE_NAME = 'alexdatasap/prod-eng-img'
         GITHUB_REPOSITORY = 'Angelic-Helics/Production-Engineering'
-        GITHUB_TOKEN = credentials('github_token')
     }
 
     stages {
@@ -78,20 +77,26 @@ pipeline {
 
         stage('Tag Git Release') {
             steps {
-                sh '''
-                    IMAGE_VERSION="$(cat .image-version)"
+                withCredentials([usernamePassword(
+                    credentialsId: 'github',
+                    usernameVariable: 'GITHUB_USERNAME',
+                    passwordVariable: 'GITHUB_TOKEN'
+                )]) {
+                    sh '''
+                        IMAGE_VERSION="$(cat .image-version)"
 
-                    git config user.email "jenkins@local"
-                    git config user.name "Jenkins"
+                        git config user.email "jenkins@local"
+                        git config user.name "Jenkins"
 
-                    if git rev-parse "$IMAGE_VERSION" >/dev/null 2>&1; then
-                        echo "Git tag $IMAGE_VERSION already exists."
-                    else
-                        git tag "$IMAGE_VERSION"
-                    fi
+                        if git rev-parse "$IMAGE_VERSION" >/dev/null 2>&1; then
+                            echo "Git tag $IMAGE_VERSION already exists."
+                        else
+                            git tag "$IMAGE_VERSION"
+                        fi
 
-                    git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$IMAGE_VERSION"
-                '''
+                        git push "https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$IMAGE_VERSION"
+                    '''
+                }
             }
         }
 
