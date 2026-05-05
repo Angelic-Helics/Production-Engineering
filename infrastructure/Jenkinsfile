@@ -130,7 +130,7 @@ pipeline {
 
         stage('Integration Tests') {
             steps {
-                sh 'MONGODB_TEST_HOST=host.docker.internal ./gradlew testIT'
+                sh 'MONGODB_TEST_HOST=host.docker.internal gradle testIT'
             }
         }
     }
