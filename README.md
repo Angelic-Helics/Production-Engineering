@@ -175,3 +175,22 @@ Jenkins successful build
 Organization scan log showing the jenkins branch
 Docker Hub repository with the pushed image tag
 ```
+
+## Stoinoiu Alexandru and Ristea Alexandru - Lab 7
+
+- We extended the Jenkins pipeline from CI to continuous delivery for the KitchenFlow service.
+- We updated the pipeline to determine the next Docker image version from the latest Git tag and to store both the image version and the full Docker image tag during the build.
+- We configured the pipeline to build and push versioned Docker images to Docker Hub under `alexdatasap/prod-eng-img`, for example `alexdatasap/prod-eng-img:1.4.0`.
+- We added Git release tagging to the pipeline so each successful delivery creates and pushes a matching Git tag, such as `1.4.0`.
+- We updated the deployment step to run the published Docker Hub image together with MongoDB using Docker from Jenkins.
+- We configured the integration test stage to run after deployment with the Jenkins Gradle installation and the Testcontainers settings required by the Docker-based Jenkins environment.
+- We verified that the Jenkins pipeline finishes successfully end to end: build, unit tests, Docker image build, Docker Hub push, Git tag push, application deployment, and integration tests.
+
+- Lab 7 evidence:
+```text
+Jenkins successful CD build with all stages completed
+Docker Hub repository showing the versioned image tags
+GitHub repository showing the matching release tags
+Running Docker containers for the deployed application and MongoDB
+Application health endpoint responding after deployment
+```
