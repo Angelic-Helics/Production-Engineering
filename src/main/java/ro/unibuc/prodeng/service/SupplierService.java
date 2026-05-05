@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.metrics.KitchenFlowMetrics;
 import ro.unibuc.prodeng.model.SupplierEntity;
 import ro.unibuc.prodeng.repository.InventoryItemRepository;
 import ro.unibuc.prodeng.repository.SupplierRepository;
@@ -21,6 +22,9 @@ public class SupplierService {
 
     @Autowired
     private InventoryItemRepository inventoryItemRepository;
+
+    @Autowired
+    private KitchenFlowMetrics kitchenFlowMetrics;
 
     public List<SupplierResponse> getAllSuppliers() {
         return supplierRepository.findAll().stream()
@@ -50,7 +54,9 @@ public class SupplierService {
                 request.phoneNumber()
         );
 
-        return toResponse(supplierRepository.save(supplier));
+        SupplierResponse response = toResponse(supplierRepository.save(supplier));
+        kitchenFlowMetrics.recordSupplierCreated();
+        return response;
     }
 
     public SupplierResponse updateSupplier(String id, UpdateSupplierRequest request) {
@@ -69,7 +75,9 @@ public class SupplierService {
                 request.phoneNumber()
         );
 
-        return toResponse(supplierRepository.save(updated));
+        SupplierResponse response = toResponse(supplierRepository.save(updated));
+        kitchenFlowMetrics.recordSupplierUpdated();
+        return response;
     }
 
     public void deleteSupplier(String id) {
@@ -82,6 +90,7 @@ public class SupplierService {
         }
 
         supplierRepository.deleteById(id);
+        kitchenFlowMetrics.recordSupplierDeleted();
     }
 
     private SupplierResponse toResponse(SupplierEntity supplier) {

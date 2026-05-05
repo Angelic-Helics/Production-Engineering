@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.metrics.KitchenFlowMetrics;
 import ro.unibuc.prodeng.model.SupplierEntity;
 import ro.unibuc.prodeng.repository.InventoryItemRepository;
 import ro.unibuc.prodeng.repository.SupplierRepository;
@@ -34,6 +35,9 @@ class SupplierServiceTest {
 
     @Mock
     private InventoryItemRepository inventoryItemRepository;
+
+    @Mock
+    private KitchenFlowMetrics kitchenFlowMetrics;
 
     @InjectMocks
     private SupplierService supplierService;
@@ -73,6 +77,7 @@ class SupplierServiceTest {
 
         assertEquals("generated-id", result.id());
         assertEquals("Fresh Farm Supply", result.companyName());
+        verify(kitchenFlowMetrics, times(1)).recordSupplierCreated();
     }
 
     @Test
@@ -106,6 +111,7 @@ class SupplierServiceTest {
         assertEquals("Bianca Popescu", result.name());
         assertEquals("Fresh Farm Supply SRL", result.companyName());
         assertEquals("+40700999888", result.phoneNumber());
+        verify(kitchenFlowMetrics, times(1)).recordSupplierUpdated();
     }
 
     @Test
@@ -153,5 +159,6 @@ class SupplierServiceTest {
         supplierService.deleteSupplier("1");
 
         verify(supplierRepository, times(1)).deleteById("1");
+        verify(kitchenFlowMetrics, times(1)).recordSupplierDeleted();
     }
 }

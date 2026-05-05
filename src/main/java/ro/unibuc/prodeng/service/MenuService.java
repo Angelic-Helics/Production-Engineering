@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.metrics.KitchenFlowMetrics;
 import ro.unibuc.prodeng.model.IngredientRequirement;
 import ro.unibuc.prodeng.model.InventoryItemEntity;
 import ro.unibuc.prodeng.model.MenuItemEntity;
@@ -25,6 +26,9 @@ public class MenuService {
 
     @Autowired
     private InventoryItemRepository inventoryItemRepository;
+
+    @Autowired
+    private KitchenFlowMetrics kitchenFlowMetrics;
 
     public List<MenuItemResponse> getAllMenuItems() {
         return menuItemRepository.findAll().stream()
@@ -46,7 +50,9 @@ public class MenuService {
                 recipe
         );
 
-        return toResponse(menuItemRepository.save(item));
+        MenuItemResponse response = toResponse(menuItemRepository.save(item));
+        kitchenFlowMetrics.recordMenuCreated();
+        return response;
     }
 
     public MenuItemResponse updateMenuItem(String id, UpdateMenuItemRequest request) {
@@ -60,7 +66,9 @@ public class MenuService {
                 recipe
         );
 
-        return toResponse(menuItemRepository.save(updated));
+        MenuItemResponse response = toResponse(menuItemRepository.save(updated));
+        kitchenFlowMetrics.recordMenuUpdated();
+        return response;
     }
 
     public void deleteMenuItem(String id) {
@@ -69,6 +77,7 @@ public class MenuService {
         }
 
         menuItemRepository.deleteById(id);
+        kitchenFlowMetrics.recordMenuDeleted();
     }
 
     private MenuItemEntity getMenuItemEntityById(String id) {

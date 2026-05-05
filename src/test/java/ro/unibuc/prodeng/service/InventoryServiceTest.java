@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.metrics.KitchenFlowMetrics;
 import ro.unibuc.prodeng.model.IngredientRequirement;
 import ro.unibuc.prodeng.model.InventoryItemEntity;
 import ro.unibuc.prodeng.model.MenuItemEntity;
@@ -41,6 +43,9 @@ class InventoryServiceTest {
 
     @Mock
     private SupplierService supplierService;
+
+    @Mock
+    private KitchenFlowMetrics kitchenFlowMetrics;
 
     @InjectMocks
     private InventoryService inventoryService;
@@ -104,6 +109,7 @@ class InventoryServiceTest {
         assertEquals("generated-id", result.id());
         assertEquals("kg", result.unit());
         assertFalse(result.lowStock());
+        verify(kitchenFlowMetrics, times(1)).recordInventoryCreated();
     }
 
     @Test
@@ -130,6 +136,7 @@ class InventoryServiceTest {
         assertEquals("kg", result.unit());
         assertEquals(new BigDecimal("4.50"), result.quantityInStock());
         assertEquals("sup-2", result.supplierId());
+        verify(kitchenFlowMetrics, times(1)).recordInventoryUpdated();
     }
 
     @Test
@@ -149,6 +156,7 @@ class InventoryServiceTest {
         );
 
         assertEquals(new BigDecimal("7.50"), result.quantityInStock());
+        verify(kitchenFlowMetrics, times(1)).recordInventoryRestocked(new BigDecimal("3.00"));
     }
 
     @Test
@@ -191,5 +199,6 @@ class InventoryServiceTest {
         inventoryService.deleteInventoryItem("1");
 
         verify(inventoryItemRepository).deleteById("1");
+        verify(kitchenFlowMetrics, times(1)).recordInventoryDeleted();
     }
 }

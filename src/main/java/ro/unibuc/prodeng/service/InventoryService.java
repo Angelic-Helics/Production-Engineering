@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.metrics.KitchenFlowMetrics;
 import ro.unibuc.prodeng.model.InventoryItemEntity;
 import ro.unibuc.prodeng.model.MenuItemEntity;
 import ro.unibuc.prodeng.model.SupplierEntity;
@@ -28,6 +29,9 @@ public class InventoryService {
 
     @Autowired
     private SupplierService supplierService;
+
+    @Autowired
+    private KitchenFlowMetrics kitchenFlowMetrics;
 
     public List<InventoryItemResponse> getInventoryItems(Boolean lowStock, String supplierId) {
         List<InventoryItemEntity> items = supplierId == null || supplierId.isBlank()
@@ -61,7 +65,9 @@ public class InventoryService {
                 supplier.id()
         );
 
-        return toResponse(inventoryItemRepository.save(item), supplier);
+        InventoryItemResponse response = toResponse(inventoryItemRepository.save(item), supplier);
+        kitchenFlowMetrics.recordInventoryCreated();
+        return response;
     }
 
     public InventoryItemResponse updateInventoryItem(String id, UpdateInventoryItemRequest request) {
@@ -77,7 +83,9 @@ public class InventoryService {
                 supplier.id()
         );
 
-        return toResponse(inventoryItemRepository.save(updated), supplier);
+        InventoryItemResponse response = toResponse(inventoryItemRepository.save(updated), supplier);
+        kitchenFlowMetrics.recordInventoryUpdated();
+        return response;
     }
 
     public InventoryItemResponse restockInventoryItem(String id, RestockInventoryItemRequest request) {
@@ -91,7 +99,9 @@ public class InventoryService {
                 existing.supplierId()
         );
 
-        return toResponse(inventoryItemRepository.save(updated));
+        InventoryItemResponse response = toResponse(inventoryItemRepository.save(updated));
+        kitchenFlowMetrics.recordInventoryRestocked(request.quantity());
+        return response;
     }
 
     public void deleteInventoryItem(String id) {
@@ -109,6 +119,7 @@ public class InventoryService {
         }
 
         inventoryItemRepository.deleteById(id);
+        kitchenFlowMetrics.recordInventoryDeleted();
     }
 
     private String normalizeUnit(String unit) {

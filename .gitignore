@@ -1,5 +1,6 @@
 HELP.md
 .gradle
+.gradle-local/
 .gradle-home/
 .gradle-user/
 .gradle-lab5-home/

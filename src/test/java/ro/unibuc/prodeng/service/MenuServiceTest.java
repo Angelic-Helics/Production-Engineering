@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.metrics.KitchenFlowMetrics;
 import ro.unibuc.prodeng.model.IngredientRequirement;
 import ro.unibuc.prodeng.model.InventoryItemEntity;
 import ro.unibuc.prodeng.model.MenuItemEntity;
@@ -38,6 +39,9 @@ class MenuServiceTest {
 
     @Mock
     private InventoryItemRepository inventoryItemRepository;
+
+    @Mock
+    private KitchenFlowMetrics kitchenFlowMetrics;
 
     @InjectMocks
     private MenuService menuService;
@@ -81,6 +85,7 @@ class MenuServiceTest {
         assertEquals("menu-1", result.id());
         assertEquals("Mozzarella", result.recipe().get(0).inventoryItemName());
         assertTrue(result.available());
+        verify(kitchenFlowMetrics, times(1)).recordMenuCreated();
     }
 
     @Test
@@ -141,6 +146,7 @@ class MenuServiceTest {
         assertEquals("Quattro Formaggi", result.name());
         assertEquals(new BigDecimal("44.50"), result.price());
         assertEquals("Cheese Blend", result.recipe().get(0).inventoryItemName());
+        verify(kitchenFlowMetrics, times(1)).recordMenuUpdated();
     }
 
     @Test
@@ -157,5 +163,6 @@ class MenuServiceTest {
         menuService.deleteMenuItem("menu-1");
 
         verify(menuItemRepository, times(1)).deleteById("menu-1");
+        verify(kitchenFlowMetrics, times(1)).recordMenuDeleted();
     }
 }
