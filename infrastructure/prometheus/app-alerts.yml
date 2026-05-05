@@ -1,20 +1,32 @@
 groups:
   - name: AppAlerts
     rules:
-      - alert: WARNING-HighThroughput
-        expr: rate(prod_eng_info_count_total[1m]) > 10
-        for: 10s
-        labels:
-          severity: warning
-        annotations:
-          summary: Increased info retrieval rate {{ $labels.value}} {{ $value }}
-          description: "A container has disappeared\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-
-      - alert: CRITICAL-HighThroughput
-        expr: rate(prod_eng_info_count_total[1m]) > 50
-        for: 10s
+      - alert: CRITICAL-ApplicationUnavailable
+        expr: up{job="spring-prod-eng-app"} == 0
+        for: 30s
         labels:
           severity: critical
+          category: availability
         annotations:
-          summary: Increased info retrieval rate {{ $labels.value}} {{ $value }}
-          description: "A container has disappeared\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+          summary: KitchenFlow application is unavailable
+          description: "Prometheus cannot scrape the Spring Boot application target for more than 30 seconds.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: WARNING-HighHttpRequestLatency
+        expr: max(http_server_requests_seconds_max{job="spring-prod-eng-app", uri!="/actuator/prometheus"}) > 0.5
+        for: 30s
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: KitchenFlow HTTP request latency is high
+          description: "At least one Spring Boot HTTP endpoint is taking more than 500ms to respond.\n  VALUE = {{ $value }} seconds\n  LABELS = {{ $labels }}"
+
+      - alert: CRITICAL-HighHttpRequestLatency
+        expr: max(http_server_requests_seconds_max{job="spring-prod-eng-app", uri!="/actuator/prometheus"}) > 1
+        for: 30s
+        labels:
+          severity: critical
+          category: performance
+        annotations:
+          summary: KitchenFlow HTTP request latency is critically high
+          description: "At least one Spring Boot HTTP endpoint is taking more than 1 second to respond.\n  VALUE = {{ $value }} seconds\n  LABELS = {{ $labels }}"

@@ -48,5 +48,8 @@ infrastructure/prometheus/durable
 ### Durable Loki store
 infrastructure/loki/durable/
 
+### Local Alertmanager secrets
+infrastructure/alertmanager/alertmanager.local.yml
+
 ### Claude Code ###
 .claude/
