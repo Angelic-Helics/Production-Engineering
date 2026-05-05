@@ -102,7 +102,29 @@ pipeline {
 
         stage('Deploy Application') {
             steps {
-                sh 'IMAGE_TAG="$(cat .image-version)" docker compose --profile mongo --profile prod-eng-service up -d prod-eng mongo'
+                sh '''
+                    IMAGE_TAG="$(cat .docker-image-tag)"
+
+                    docker network create prodeng_default || true
+                    docker rm -f prodeng-prod-eng-1 prodeng-mongo-1 || true
+
+                    docker run -d \
+                        --name prodeng-mongo-1 \
+                        --network prodeng_default \
+                        -p 27017:27017 \
+                        -e MONGO_INITDB_ROOT_USERNAME=root \
+                        -e MONGO_INITDB_ROOT_PASSWORD=example \
+                        mongo:6.0.20
+
+                    docker run -d \
+                        --name prodeng-prod-eng-1 \
+                        --network prodeng_default \
+                        -p 8080:8080 \
+                        -p 5005:5005 \
+                        -e ENVIRONMENT_NAME=local \
+                        -e MONGODB_CONECTION_URL=mongodb://root:example@prodeng-mongo-1:27017/ \
+                        "$IMAGE_TAG"
+                '''
             }
         }
 
