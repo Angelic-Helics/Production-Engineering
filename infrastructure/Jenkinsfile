@@ -8,6 +8,8 @@ pipeline {
 
     environment {
         DOCKER_IMAGE_NAME = 'alexdatasap/prod-eng-img'
+        GITHUB_REPOSITORY = 'Angelic-Helics/Production-Engineering'
+        GITHUB_TOKEN = credentials('github_token')
     }
 
     stages {
@@ -42,9 +44,12 @@ pipeline {
                     case "$PATCH" in ''|*[!0-9]*) PATCH=0 ;; esac
 
                     NEXT_MINOR=$((MINOR + 1))
-                    IMAGE_TAG="$DOCKER_IMAGE_NAME:$MAJOR.$NEXT_MINOR.$PATCH"
+                    IMAGE_VERSION="$MAJOR.$NEXT_MINOR.$PATCH"
+                    IMAGE_TAG="$DOCKER_IMAGE_NAME:$IMAGE_VERSION"
 
+                    echo "$IMAGE_VERSION" > .image-version
                     echo "$IMAGE_TAG" > .docker-image-tag
+                    echo "Docker image version: $IMAGE_VERSION"
                     echo "Docker image tag: $IMAGE_TAG"
                 '''
             }
@@ -68,6 +73,37 @@ pipeline {
                         docker push "$(cat .docker-image-tag)"
                     '''
                 }
+            }
+        }
+
+        stage('Tag Git Release') {
+            steps {
+                sh '''
+                    IMAGE_VERSION="$(cat .image-version)"
+
+                    git config user.email "jenkins@local"
+                    git config user.name "Jenkins"
+
+                    if git rev-parse "$IMAGE_VERSION" >/dev/null 2>&1; then
+                        echo "Git tag $IMAGE_VERSION already exists."
+                    else
+                        git tag "$IMAGE_VERSION"
+                    fi
+
+                    git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$IMAGE_VERSION"
+                '''
+            }
+        }
+
+        stage('Deploy Application') {
+            steps {
+                sh 'IMAGE_TAG="$(cat .image-version)" docker compose --profile mongo --profile prod-eng-service up -d prod-eng mongo'
+            }
+        }
+
+        stage('Integration Tests') {
+            steps {
+                sh 'MONGODB_TEST_HOST=host.docker.internal ./gradlew testIT'
             }
         }
     }

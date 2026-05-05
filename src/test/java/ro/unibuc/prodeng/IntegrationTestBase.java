@@ -29,7 +29,8 @@ public abstract class IntegrationTestBase {
 
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
-        String mongoUrl = "mongodb://localhost:" + mongoDBContainer.getMappedPort(27017);
+        String mongoHost = System.getenv().getOrDefault("MONGODB_TEST_HOST", "localhost");
+        String mongoUrl = "mongodb://" + mongoHost + ":" + mongoDBContainer.getMappedPort(27017);
         registry.add("mongodb.connection.url", () -> mongoUrl);
     }
 }
