@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.metrics.KitchenFlowMetrics;
 import ro.unibuc.prodeng.model.CustomerEntity;
 import ro.unibuc.prodeng.model.OrderEntity;
 import ro.unibuc.prodeng.model.OrderStatus;
@@ -22,6 +23,9 @@ public class OrderService {
 
     @Autowired
     private CustomerService customerService;
+
+    @Autowired
+    private KitchenFlowMetrics kitchenFlowMetrics;
 
     public List<OrderResponse> getOrdersByCustomerEmail(String customerEmail) {
         CustomerEntity customer = customerService.getCustomerEntityByEmail(customerEmail);
@@ -47,7 +51,9 @@ public class OrderService {
                 customer.id()
         );
 
-        return toResponse(orderRepository.save(order), customer);
+        OrderResponse response = toResponse(orderRepository.save(order), customer);
+        kitchenFlowMetrics.recordOrderCreated();
+        return response;
     }
 
     public OrderResponse updateStatus(String id, UpdateOrderStatusRequest request) {
@@ -65,7 +71,9 @@ public class OrderService {
 
         OrderEntity saved = orderRepository.save(updated);
         CustomerEntity customer = customerService.getCustomerEntityById(saved.customerId());
-        return toResponse(saved, customer);
+        OrderResponse response = toResponse(saved, customer);
+        kitchenFlowMetrics.recordOrderStatusUpdated(saved.status());
+        return response;
     }
 
     public void deleteOrder(String id) {
@@ -74,6 +82,7 @@ public class OrderService {
         }
 
         orderRepository.deleteById(id);
+        kitchenFlowMetrics.recordOrderDeleted();
     }
 
     private OrderEntity getOrderEntityById(String id) {

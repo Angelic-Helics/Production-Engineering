@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.metrics.KitchenFlowMetrics;
 import ro.unibuc.prodeng.model.CustomerEntity;
 import ro.unibuc.prodeng.repository.CustomerRepository;
 import ro.unibuc.prodeng.request.CreateCustomerRequest;
@@ -30,6 +31,9 @@ class CustomerServiceTest {
 
     @Mock
     private CustomerRepository customerRepository;
+
+    @Mock
+    private KitchenFlowMetrics kitchenFlowMetrics;
 
     @InjectMocks
     private CustomerService customerService;
@@ -104,6 +108,7 @@ class CustomerServiceTest {
         assertEquals("Alice", result.name());
         assertEquals("+40111111111", result.phoneNumber());
         verify(customerRepository, times(1)).save(any(CustomerEntity.class));
+        verify(kitchenFlowMetrics, times(1)).recordCustomerCreated();
     }
 
     @Test
@@ -131,6 +136,7 @@ class CustomerServiceTest {
         assertEquals("1", result.id());
         assertEquals("Alice Updated", result.name());
         assertEquals("+40333333333", result.phoneNumber());
+        verify(kitchenFlowMetrics, times(1)).recordCustomerUpdated();
     }
 
     @Test
@@ -157,5 +163,6 @@ class CustomerServiceTest {
         customerService.deleteCustomer("1");
 
         verify(customerRepository, times(1)).deleteById("1");
+        verify(kitchenFlowMetrics, times(1)).recordCustomerDeleted();
     }
 }

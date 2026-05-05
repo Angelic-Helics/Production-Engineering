@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.metrics.KitchenFlowMetrics;
 import ro.unibuc.prodeng.model.CustomerEntity;
 import ro.unibuc.prodeng.repository.CustomerRepository;
 import ro.unibuc.prodeng.request.CreateCustomerRequest;
@@ -17,6 +18,9 @@ public class CustomerService {
 
     @Autowired
     private CustomerRepository customerRepository;
+
+    @Autowired
+    private KitchenFlowMetrics kitchenFlowMetrics;
 
     public List<CustomerResponse> getAllCustomers() {
         return customerRepository.findAll().stream()
@@ -54,7 +58,9 @@ public class CustomerService {
                 request.phoneNumber()
         );
 
-        return toResponse(customerRepository.save(customer));
+        CustomerResponse response = toResponse(customerRepository.save(customer));
+        kitchenFlowMetrics.recordCustomerCreated();
+        return response;
     }
 
     public CustomerResponse updateCustomer(String id, UpdateCustomerRequest request) {
@@ -66,7 +72,9 @@ public class CustomerService {
                 request.phoneNumber()
         );
 
-        return toResponse(customerRepository.save(updated));
+        CustomerResponse response = toResponse(customerRepository.save(updated));
+        kitchenFlowMetrics.recordCustomerUpdated();
+        return response;
     }
 
     public void deleteCustomer(String id) {
@@ -75,6 +83,7 @@ public class CustomerService {
         }
 
         customerRepository.deleteById(id);
+        kitchenFlowMetrics.recordCustomerDeleted();
     }
 
     private CustomerResponse toResponse(CustomerEntity customer) {

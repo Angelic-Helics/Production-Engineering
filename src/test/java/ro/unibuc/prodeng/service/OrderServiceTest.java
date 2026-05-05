@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.metrics.KitchenFlowMetrics;
 import ro.unibuc.prodeng.model.CustomerEntity;
 import ro.unibuc.prodeng.model.OrderEntity;
 import ro.unibuc.prodeng.model.OrderStatus;
@@ -33,6 +34,9 @@ class OrderServiceTest {
 
     @Mock
     private CustomerService customerService;
+
+    @Mock
+    private KitchenFlowMetrics kitchenFlowMetrics;
 
     @InjectMocks
     private OrderService orderService;
@@ -107,6 +111,7 @@ class OrderServiceTest {
         assertEquals("Extra sauce", result.specialInstructions());
         assertEquals(OrderStatus.CREATED, result.status());
         verify(orderRepository, times(1)).save(any(OrderEntity.class));
+        verify(kitchenFlowMetrics, times(1)).recordOrderCreated();
     }
 
     @Test
@@ -148,6 +153,7 @@ class OrderServiceTest {
 
         assertEquals(OrderStatus.PREPARING, result.status());
         verify(orderRepository, times(1)).save(any(OrderEntity.class));
+        verify(kitchenFlowMetrics, times(1)).recordOrderStatusUpdated(OrderStatus.PREPARING);
     }
 
     @Test
@@ -206,6 +212,7 @@ class OrderServiceTest {
         orderService.deleteOrder("o1");
 
         verify(orderRepository, times(1)).deleteById("o1");
+        verify(kitchenFlowMetrics, times(1)).recordOrderDeleted();
     }
 
     @Test
