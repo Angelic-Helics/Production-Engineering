@@ -26,37 +26,46 @@ pipeline {
 
         stage('Determine Image Version') {
             steps {
-                sh '''
-                    git fetch --tags --force
-                    LATEST_TAG="$(git tag --sort=-v:refname | head -n 1)"
+                script {
+                    sh 'git fetch --tags --force'
 
-                    if [ -z "$LATEST_TAG" ]; then
-                        LATEST_TAG="1.0.0"
-                    fi
+                    env.LATEST_TAG = sh(
+                        script: 'git tag | sort --version-sort | tail -1',
+                        returnStdout: true
+                    ).trim()
 
-                    MAJOR="$(echo "$LATEST_TAG" | cut -d. -f1)"
-                    MINOR="$(echo "$LATEST_TAG" | cut -d. -f2)"
-                    PATCH="$(echo "$LATEST_TAG" | cut -d. -f3)"
+                    if (!env.LATEST_TAG) {
+                        env.LATEST_TAG = '1.0.0'
+                    }
 
-                    case "$MAJOR" in ''|*[!0-9]*) MAJOR=1 ;; esac
-                    case "$MINOR" in ''|*[!0-9]*) MINOR=0 ;; esac
-                    case "$PATCH" in ''|*[!0-9]*) PATCH=0 ;; esac
+                    env.MAJOR_VERSION = sh(
+                        script: "echo '${env.LATEST_TAG}' | cut -d . -f 1",
+                        returnStdout: true
+                    ).trim()
+                    env.MINOR_VERSION = sh(
+                        script: "echo '${env.LATEST_TAG}' | cut -d . -f 2",
+                        returnStdout: true
+                    ).trim()
+                    env.PATCH_VERSION = sh(
+                        script: "echo '${env.LATEST_TAG}' | cut -d . -f 3",
+                        returnStdout: true
+                    ).trim()
 
-                    NEXT_MINOR=$((MINOR + 1))
-                    IMAGE_VERSION="$MAJOR.$NEXT_MINOR.$PATCH"
-                    IMAGE_TAG="$DOCKER_IMAGE_NAME:$IMAGE_VERSION"
+                    env.MAJOR_VERSION = env.MAJOR_VERSION.isInteger() ? env.MAJOR_VERSION : '1'
+                    env.MINOR_VERSION = env.MINOR_VERSION.isInteger() ? env.MINOR_VERSION : '0'
+                    env.PATCH_VERSION = env.PATCH_VERSION.isInteger() ? env.PATCH_VERSION : '0'
+                    env.IMAGE_TAG = "${env.MAJOR_VERSION}.${env.MINOR_VERSION.toInteger() + 1}.${env.PATCH_VERSION}"
+                    env.DOCKER_IMAGE = "${env.DOCKER_IMAGE_NAME}:${env.IMAGE_TAG}"
 
-                    echo "$IMAGE_VERSION" > .image-version
-                    echo "$IMAGE_TAG" > .docker-image-tag
-                    echo "Docker image version: $IMAGE_VERSION"
-                    echo "Docker image tag: $IMAGE_TAG"
-                '''
+                    echo "Latest git tag: ${env.LATEST_TAG}"
+                    echo "Docker image: ${env.DOCKER_IMAGE}"
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t "$(cat .docker-image-tag)" .'
+                sh 'docker build -t "$DOCKER_IMAGE" .'
             }
         }
 
@@ -69,7 +78,7 @@ pipeline {
                 )]) {
                     sh '''
                         echo "$DOCKER_PASSWORD" | docker login docker.io -u "$DOCKER_USERNAME" --password-stdin
-                        docker push "$(cat .docker-image-tag)"
+                        docker push "$DOCKER_IMAGE"
                     '''
                 }
             }
@@ -77,24 +86,18 @@ pipeline {
 
         stage('Tag Git Release') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'github',
-                    usernameVariable: 'GITHUB_USERNAME',
-                    passwordVariable: 'GITHUB_TOKEN'
-                )]) {
+                withCredentials([string(credentialsId: 'github_token', variable: 'GITHUB_TOKEN')]) {
                     sh '''
-                        IMAGE_VERSION="$(cat .image-version)"
-
                         git config user.email "jenkins@local"
                         git config user.name "Jenkins"
 
-                        if git rev-parse "$IMAGE_VERSION" >/dev/null 2>&1; then
-                            echo "Git tag $IMAGE_VERSION already exists."
+                        if git rev-parse "$IMAGE_TAG" >/dev/null 2>&1; then
+                            echo "Git tag $IMAGE_TAG already exists."
                         else
-                            git tag "$IMAGE_VERSION"
+                            git tag "$IMAGE_TAG"
                         fi
 
-                        git push "https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$IMAGE_VERSION"
+                        git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$IMAGE_TAG"
                     '''
                 }
             }
@@ -103,27 +106,7 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 sh '''
-                    IMAGE_TAG="$(cat .docker-image-tag)"
-
-                    docker network create prodeng_default || true
-                    docker rm -f prodeng-prod-eng-1 prodeng-mongo-1 || true
-
-                    docker run -d \
-                        --name prodeng-mongo-1 \
-                        --network prodeng_default \
-                        -p 27017:27017 \
-                        -e MONGO_INITDB_ROOT_USERNAME=root \
-                        -e MONGO_INITDB_ROOT_PASSWORD=example \
-                        mongo:6.0.20
-
-                    docker run -d \
-                        --name prodeng-prod-eng-1 \
-                        --network prodeng_default \
-                        -p 8080:8080 \
-                        -p 5005:5005 \
-                        -e ENVIRONMENT_NAME=local \
-                        -e MONGODB_CONECTION_URL=mongodb://root:example@prodeng-mongo-1:27017/ \
-                        "$IMAGE_TAG"
+                    docker compose --profile mongo --profile prod-eng-service up -d mongo prod-eng
                 '''
             }
         }

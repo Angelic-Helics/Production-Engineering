@@ -1,6 +1,6 @@
 services:
   prod-eng:
-    image: alexdatasap/prod-eng-img:${IMAGE_TAG}
+    image: ${DOCKER_IMAGE_NAME:-alexdatasap/prod-eng-img}:${IMAGE_TAG:-latest}
     ports:
       - 8080:8080
       # Port for debug

@@ -17,8 +17,8 @@ POST http://localhost:8080/api/customers
 Content-Type: application/json
 
 {
-    "name": "Jean Valjean",
-    "email": "jean.valjean@kitchenflow.ro",
+    "name": "ionela2",
+    "email": "ionela2.valjean@kitchenflow.ro",
     "phoneNumber": "+40123456789"
 }
 
@@ -49,9 +49,9 @@ Content-Type: application/json
 
 {
     "itemName": "Margherita Pizza",
-    "quantity": 2,
-    "customerEmail": "{{createCustomer.response.body.email}}",
-    "specialInstructions": "Extra basil"
+    "quantity": 1,
+    "customerEmail": "ionela2.valjean@kitchenflow.ro",
+    "specialInstructions": ""
 }
 
 ### Get orders by customer email
@@ -90,9 +90,9 @@ POST http://localhost:8080/api/suppliers
 Content-Type: application/json
 
 {
-    "name": "Bianca Popescu",
-    "companyName": "Fresh Farm Supply",
-    "email": "bianca@freshfarm.ro",
+    "name": "Bianca Popescul",
+    "companyName": "Test Farm",
+    "email": "biancal@freshfarm.ro",
     "phoneNumber": "+40700111222"
 }
 
@@ -126,9 +126,9 @@ Content-Type: application/json
 {
     "name": "Mozzarella",
     "unit": "kg",
-    "quantityInStock": 4.5,
+    "quantityInStock": 1.0,
     "reorderThreshold": 2.0,
-    "supplierId": "{{createSupplier.response.body.id}}"
+    "supplierId": "69faf4b33e74c545997349e6"
 }
 
 ### Get low stock inventory items
@@ -141,7 +141,7 @@ GET http://localhost:8080/api/inventory-items?supplierId={{createSupplier.respon
 GET http://localhost:8080/api/inventory-items/{{createInventoryItem.response.body.id}}
 
 ### Update inventory item
-PUT http://localhost:8080/api/inventory-items/{{createInventoryItem.response.body.id}}
+PUT http://localhost:8080/api/inventory-items/69faf58e3e74c545997349ec
 Content-Type: application/json
 
 {
@@ -152,11 +152,11 @@ Content-Type: application/json
 }
 
 ### Restock inventory item
-PATCH http://localhost:8080/api/inventory-items/{{createInventoryItem.response.body.id}}/restock
+PATCH http://localhost:8080/api/inventory-items/69faf58e3e74c545997349ec/restock
 Content-Type: application/json
 
 {
-    "quantity": 3.0
+    "quantity": 13.0
 }
 
 
