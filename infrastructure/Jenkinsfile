@@ -116,5 +116,11 @@ pipeline {
                 sh 'TESTCONTAINERS_RYUK_DISABLED=true MONGODB_TEST_HOST=host.docker.internal gradle testIT'
             }
         }
+
+        stage('E2E Tests') {
+            steps {
+                sh 'E2E_BASE_URL=http://host.docker.internal:8080 gradle testE2E'
+            }
+        }
     }
 }
